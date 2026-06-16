@@ -1,0 +1,37 @@
+{
+  "name": "@steelwhite/dom-parser",
+  "version": "1.0.0-rc.1",
+  "description": "A browser-compatible DOMParser implementation for Node.js and other JS runtimes.",
+  "keywords": ["domparser", "parse5", "css-selector", "queryselector"],
+  "homepage": "https://github.com/dmitri-gb/steelwhite-dom-parser",
+  "bugs": {
+    "url": "https://github.com/dmitri-gb/steelwhite-dom-parser/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dmitri-gb/steelwhite-dom-parser.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@asamuzakjp/dom-selector": "^8.1.3",
+    "htmlparser2": "^12.0.0",
+    "parse5": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  }
+}
