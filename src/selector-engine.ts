@@ -55,5 +55,12 @@ export function querySelectorOne(selector: string, node: Node) {
 }
 
 export function querySelectorMany(selector: string, node: Node) {
-  return getEngine().querySelectorAll(selector, node as any) as unknown[] as Element[];
+  return (
+    getEngine()
+      .querySelectorAll(selector, node as any)
+      // Need to sort the results ourselves due to https://github.com/asamuzaK/domSelector/issues/266
+      .sort((a, b) =>
+        a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+      ) as unknown[] as Element[]
+  );
 }

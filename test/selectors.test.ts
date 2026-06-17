@@ -30,6 +30,12 @@ describe('CSS selector querying', () => {
     expect(doc.querySelector('p + p')?.textContent).toBe('two');
   });
 
+  it('multiple branches return matches in document order', () => {
+    const all = doc.querySelector('main')!.querySelectorAll('#s2, #s1');
+    expect(all[0]?.id).toBe('s1');
+    expect(all[1]?.id).toBe('s2');
+  });
+
   it('structural pseudo-classes', () => {
     expect(doc.querySelector('#s1 p:first-child')?.textContent).toBe('one');
     expect(doc.querySelector('#s1 p:last-child')?.textContent).toBe('two');
