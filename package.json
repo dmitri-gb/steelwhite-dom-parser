@@ -1,6 +1,6 @@
 {
   "name": "@steelwhite/dom-parser",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A browser-compatible DOMParser implementation for Node.js and other JS runtimes.",
   "keywords": ["domparser", "parse5", "css-selector", "queryselector"],
   "homepage": "https://github.com/dmitri-gb/steelwhite-dom-parser",
