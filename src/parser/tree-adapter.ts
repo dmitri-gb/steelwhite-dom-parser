@@ -7,6 +7,7 @@ import { DocumentFragment } from '../nodes/document-fragment.js';
 import { DocumentType } from '../nodes/document-type.js';
 import { Document } from '../nodes/document.js';
 import { Element } from '../nodes/element.js';
+import { createHtmlElement, type HTMLTemplateElement } from '../nodes/html-elements.js';
 import { Node } from '../nodes/node.js';
 import { Text } from '../nodes/text.js';
 
@@ -19,7 +20,7 @@ export interface DomTreeAdapterMap extends TreeAdapterTypeMap {
   element: Element;
   commentNode: Comment;
   textNode: Text;
-  template: Element;
+  template: HTMLTemplateElement;
   documentType: DocumentType;
 }
 
@@ -30,31 +31,27 @@ function toAttr(a: Token.Attribute): Attr {
 /**
  * Build a parse5 tree adapter backed by this library's node classes.
  *
- * `doc` is the document that created nodes are attached to. It is only used by
- * the node-creation methods (i.e. during parsing); the serializer only calls
- * the read methods, so a `doc` is not required there and one is created lazily
- * if a creation method is ever reached without it.
+ * `doc` is the document that created nodes are attached to.
  */
-export function createTreeAdapter(doc?: Document): TreeAdapter<DomTreeAdapterMap> {
-  const ownerDoc = (): Document => (doc ??= new Document());
+export function createTreeAdapter(doc: Document): TreeAdapter<DomTreeAdapterMap> {
   const adapter: TreeAdapter<DomTreeAdapterMap> = {
     createDocument(): Document {
-      return ownerDoc();
+      return doc;
     },
 
     createDocumentFragment() {
       const frag = new DocumentFragment();
-      frag.ownerDocument = ownerDoc();
+      frag.ownerDocument = doc;
       return frag;
     },
 
     createElement(tagName: string, namespaceURI: html.NS, attrs: Token.Attribute[]) {
-      const el = new Element(tagName, namespaceURI, null);
-      el.ownerDocument = ownerDoc();
+      const el = createHtmlElement(tagName, namespaceURI, null);
+      el.ownerDocument = doc;
       for (const a of attrs) {
         const attr = toAttr(a);
         attr.ownerElement = el;
-        attr.ownerDocument = ownerDoc();
+        attr.ownerDocument = doc;
         el._attributes.push(attr);
       }
       return el;
@@ -62,13 +59,13 @@ export function createTreeAdapter(doc?: Document): TreeAdapter<DomTreeAdapterMap
 
     createCommentNode(data: string) {
       const node = new Comment(data);
-      node.ownerDocument = ownerDoc();
+      node.ownerDocument = doc;
       return node;
     },
 
     createTextNode(value: string) {
       const node = new Text(value);
-      node.ownerDocument = ownerDoc();
+      node.ownerDocument = doc;
       return node;
     },
 
@@ -82,7 +79,7 @@ export function createTreeAdapter(doc?: Document): TreeAdapter<DomTreeAdapterMap
 
     setTemplateContent(templateElement, contentElement) {
       templateElement._templateContent = contentElement;
-      contentElement.ownerDocument = ownerDoc();
+      contentElement.ownerDocument = doc;
     },
 
     getTemplateContent(templateElement) {
@@ -138,7 +135,7 @@ export function createTreeAdapter(doc?: Document): TreeAdapter<DomTreeAdapterMap
         const attr = toAttr(a);
         if (!present.has(attr.name)) {
           attr.ownerElement = recipient;
-          attr.ownerDocument = ownerDoc();
+          attr.ownerDocument = doc;
           recipient._attributes.push(attr);
         }
       }

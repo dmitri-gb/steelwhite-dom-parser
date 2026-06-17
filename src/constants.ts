@@ -22,7 +22,14 @@ export const DocumentPosition = {
   IMPLEMENTATION_SPECIFIC: 0x20,
 } as const;
 
-export const NodeFilterShow = {
+export const FILTER_ACCEPT = 1;
+export const FILTER_REJECT = 2;
+export const FILTER_SKIP = 3;
+
+export const NodeFilter = {
+  FILTER_ACCEPT,
+  FILTER_REJECT,
+  FILTER_SKIP,
   SHOW_ALL: 0xffffffff,
   SHOW_ELEMENT: 0x1,
   SHOW_ATTRIBUTE: 0x2,
@@ -38,10 +45,6 @@ export const NodeFilterShow = {
   SHOW_NOTATION: 0x800,
 } as const;
 
-export const FILTER_ACCEPT = 1;
-export const FILTER_REJECT = 2;
-export const FILTER_SKIP = 3;
-
 export const Namespaces = {
   HTML: 'http://www.w3.org/1999/xhtml',
   MATHML: 'http://www.w3.org/1998/Math/MathML',
@@ -50,8 +53,6 @@ export const Namespaces = {
   XML: 'http://www.w3.org/XML/1998/namespace',
   XMLNS: 'http://www.w3.org/2000/xmlns/',
 } as const;
-
-export type NodeFilterCallback = (node: unknown) => number;
 
 export interface NodeFilter {
   acceptNode(node: unknown): number;

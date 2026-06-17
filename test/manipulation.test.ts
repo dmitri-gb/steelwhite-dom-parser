@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test';
+import { describe, expect, it } from 'bun:test';
 import { DOMParser, Text } from '../src/index.js';
 
 const parse = (html: string) => new DOMParser().parseFromString(html, 'text/html');
@@ -80,6 +80,13 @@ describe('node manipulation', () => {
     const deep = div.cloneNode(true);
     expect(deep.querySelector('span')?.textContent).toBe('hi');
     expect(deep).not.toBe(div);
+  });
+
+  it('clone document', () => {
+    const doc = parse("<body><div class='c'><span>hi</span></div></body>");
+    const doc2 = doc.cloneNode(true);
+    doc2.body!.insertAdjacentHTML('beforeend', '<p>new content</p>');
+    expect(doc2.body!.children.length).toBe(2);
   });
 
   it('normalize merges adjacent text nodes', () => {

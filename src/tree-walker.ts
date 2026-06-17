@@ -1,4 +1,4 @@
-import { NodeFilterShow, FILTER_ACCEPT, FILTER_REJECT, FILTER_SKIP } from './constants.js';
+import { FILTER_ACCEPT, FILTER_REJECT, FILTER_SKIP, NodeFilter } from './constants.js';
 import type { Node } from './nodes/node.js';
 
 export type TreeWalkerFilter = ((node: Node) => number) | { acceptNode(node: Node): number } | null;
@@ -12,7 +12,7 @@ export class TreeWalker {
 
   constructor(
     readonly root: Node,
-    readonly whatToShow: number = NodeFilterShow.SHOW_ALL,
+    readonly whatToShow: number = NodeFilter.SHOW_ALL,
     readonly filter: TreeWalkerFilter = null,
   ) {
     this.currentNode = root;

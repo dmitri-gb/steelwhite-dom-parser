@@ -1,6 +1,6 @@
 export { Attr } from './attr.js';
 export { HTMLCollection, NamedNodeMap, NodeList } from './collections.js';
-export { DocumentPosition, Namespaces, NodeFilterShow, NodeType } from './constants.js';
+export { DocumentPosition, Namespaces, NodeFilter, NodeType } from './constants.js';
 export { CSSStyleDeclaration } from './css-style-declaration.js';
 export { DOMParser } from './dom-parser.js';
 export type { SupportedType } from './dom-parser.js';
@@ -12,6 +12,13 @@ export { DocumentFragment } from './nodes/document-fragment.js';
 export { DocumentType } from './nodes/document-type.js';
 export { Document } from './nodes/document.js';
 export { Element } from './nodes/element.js';
+export {
+  HTMLAnchorElement,
+  HTMLMetaElement,
+  HTMLTableElement,
+  HTMLTableRowElement,
+  HTMLTemplateElement,
+} from './nodes/html-elements.js';
 export { Node } from './nodes/node.js';
 export { ProcessingInstruction } from './nodes/processing-instruction.js';
 export { Text } from './nodes/text.js';

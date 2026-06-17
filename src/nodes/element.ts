@@ -1,5 +1,3 @@
-import { parseFragment } from 'parse5';
-
 import { Attr } from '../attr.js';
 import { HTMLCollection, NamedNodeMap, createNamedNodeMap } from '../collections.js';
 import { Namespaces, NodeType } from '../constants.js';
@@ -24,11 +22,8 @@ import {
   replaceChildren as replaceChildrenMixin,
   replaceWith as replaceWithMixin,
 } from '../mixins.js';
-import { createTreeAdapter } from '../parser/tree-adapter.js';
 import { closestSelector, matchesSelector } from '../selector-engine.js';
-import { serializeChildren, serializeNode } from '../serialize.js';
-import type { DocumentFragment } from './document-fragment.js';
-import { Document } from './document.js';
+import { kParserAndSerializer } from '../symbols.js';
 import { Node } from './node.js';
 
 export class Element extends Node {
@@ -38,8 +33,6 @@ export class Element extends Node {
   readonly localName: string;
 
   _attributes: Attr[] = [];
-  /** Backing fragment for <template> elements (HTMLTemplateElement.content). */
-  _templateContent: Node | null = null;
   private _attributesMap: NamedNodeMap | null = null;
   private _classList: DOMTokenList | null = null;
   private _style: CSSStyleDeclaration | null = null;
@@ -58,21 +51,6 @@ export class Element extends Node {
 
   get nodeName(): string {
     return this.tagName;
-  }
-
-  /**
-   * `content` is overloaded in HTML: on `<template>` it is the inert content
-   * fragment, while on `<meta>` (and other elements) it reflects the `content`
-   * content attribute.
-   */
-  get content(): Node | string | null {
-    if (this.localName === 'template') return this._templateContent;
-    return this.getAttribute('content') ?? '';
-  }
-
-  set content(value: string) {
-    if (this.localName === 'template') return;
-    this.setAttribute('content', value);
   }
 
   /* ---------- attributes ---------- */
@@ -378,16 +356,16 @@ export class Element extends Node {
   }
 
   get innerHTML(): string {
-    return serializeChildren(this);
+    return this.ownerDocument![kParserAndSerializer].serializeChildren(this);
   }
 
   set innerHTML(html: string) {
     while (this.firstChild) this.removeChild(this.firstChild);
-    parseFragmentInto(this, html);
+    this.ownerDocument![kParserAndSerializer].parseFragmentInto(this, html);
   }
 
   get outerHTML(): string {
-    return serializeNode(this);
+    return this.ownerDocument![kParserAndSerializer].serializeNode(this);
   }
 
   set outerHTML(html: string) {
@@ -400,7 +378,7 @@ export class Element extends Node {
     }
     const doc = this.ownerDocument!;
     const frag = doc.createDocumentFragment();
-    parseFragmentInto(frag, html, parent as Element);
+    doc[kParserAndSerializer].parseFragmentInto(frag, html, parent as Element);
     parent.replaceChild(frag, this);
   }
 
@@ -417,7 +395,7 @@ export class Element extends Node {
     const doc = this.ownerDocument!;
     const frag = doc.createDocumentFragment();
     const context = where === 'beforebegin' || where === 'afterend' ? (this.parentNode as Element) : this;
-    parseFragmentInto(frag, html, context);
+    doc[kParserAndSerializer].parseFragmentInto(frag, html, context);
     switch (where) {
       case 'beforebegin':
         this.parentNode?.insertBefore(frag, this);
@@ -558,7 +536,12 @@ export class Element extends Node {
 
   /* ---------- clone & equality ---------- */
   cloneNode(deep = false): Element {
-    const clone = new Element(this.localName, this.namespaceURI, this.prefix);
+    const Ctor = this.constructor as new (
+      localName: string,
+      namespaceURI: string | null,
+      prefix: string | null,
+    ) => Element;
+    const clone = new Ctor(this.localName, this.namespaceURI, this.prefix);
     clone.ownerDocument = this.ownerDocument;
     for (const attr of this._attributes) {
       const copy = new Attr(attr.localName, attr.value, attr.namespaceURI, attr.prefix);
@@ -640,18 +623,4 @@ function createDataset(el: Element): Record<string, string> {
       return undefined;
     },
   });
-}
-
-/**
- * Parse an HTML fragment and append the resulting nodes into `target`.
- * `context` provides the parsing context element (defaults to `target`),
- * which influences tokenization for elements like `<table>` or `<select>`.
- */
-function parseFragmentInto(target: Element | DocumentFragment, html: string, context?: Element): void {
-  const doc = target.ownerDocument ?? new Document();
-  const adapter = createTreeAdapter(doc);
-  const frag = parseFragment(context ?? target, html, { treeAdapter: adapter });
-  while (frag.firstChild) {
-    target.appendChild(frag.firstChild);
-  }
 }

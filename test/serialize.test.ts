@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'bun:test';
-import { DOMParser, DocumentFragment } from '../src/index.js';
+import { describe, expect, it } from 'bun:test';
+import { DOMParser, HTMLMetaElement, HTMLTemplateElement } from '../src/index.js';
 
 const parse = (html: string) => new DOMParser().parseFromString(html, 'text/html');
 
@@ -86,15 +86,14 @@ describe('serialization & HTML mutation', () => {
 
   it('template content is parsed inertly', () => {
     const doc = parse('<body><template><p>inert</p></template></body>');
-    const tpl = doc.querySelector('template')!;
-    const content = tpl.content as DocumentFragment;
-    expect(content.childNodes.length).toBe(1);
+    const tpl = doc.querySelector('template') as HTMLTemplateElement;
+    expect(tpl.content.childNodes.length).toBe(1);
     expect(tpl.childNodes.length).toBe(0);
   });
 
   it('content reflects the attribute on <meta>', () => {
     const doc = parse(`<head><meta name="viewport" content="width=device-width"></head>`);
-    const meta = doc.querySelector('meta')!;
+    const meta = doc.querySelector('meta') as HTMLMetaElement;
     expect(meta.content).toBe('width=device-width');
     meta.content = 'no-cache';
     expect(meta.getAttribute('content')).toBe('no-cache');

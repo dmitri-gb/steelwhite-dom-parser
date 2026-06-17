@@ -1,8 +1,9 @@
-import { parse } from 'parse5';
+import { parse, parseFragment, serialize, serializeOuter } from 'parse5';
 
 import { Document } from './nodes/document.js';
 import { createTreeAdapter } from './parser/tree-adapter.js';
 import { parseXml } from './parser/xml-builder.js';
+import { kParserAndSerializer } from './symbols.js';
 
 export type SupportedType = 'text/html' | 'text/xml' | 'application/xml' | 'application/xhtml+xml' | 'image/svg+xml';
 
@@ -18,8 +19,9 @@ export class DOMParser {
   parseFromString(string: string, type: SupportedType): Document {
     if (type === 'text/html') {
       const doc = new Document();
-      const adapter = createTreeAdapter(doc);
-      parse(string, { treeAdapter: adapter });
+      const pas = createParserAndSerializer(doc);
+      parse(string, { treeAdapter: pas.treeAdapter });
+      doc[kParserAndSerializer] = pas;
       return doc;
     }
     if (XML_TYPES.has(type)) {
@@ -29,4 +31,22 @@ export class DOMParser {
       `Failed to execute 'parseFromString' on 'DOMParser': The provided value '${type}' is not a valid enum value of type SupportedType.`,
     );
   }
+}
+
+function createParserAndSerializer(
+  doc: Document,
+): Document[typeof kParserAndSerializer] & { treeAdapter: ReturnType<typeof createTreeAdapter> } {
+  const treeAdapter = createTreeAdapter(doc);
+  return {
+    treeAdapter,
+    createNew: createParserAndSerializer,
+    parseFragmentInto: (target, html, context) => {
+      const frag = parseFragment(context ?? target, html, { treeAdapter });
+      while (frag.firstChild) {
+        target.appendChild(frag.firstChild);
+      }
+    },
+    serializeChildren: element => serialize(element, { treeAdapter }),
+    serializeNode: node => serializeOuter(node, { treeAdapter }),
+  };
 }

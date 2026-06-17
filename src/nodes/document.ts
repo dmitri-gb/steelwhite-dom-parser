@@ -1,6 +1,6 @@
 import { Attr } from '../attr.js';
 import { HTMLCollection } from '../collections.js';
-import { Namespaces, NodeFilterShow, NodeType } from '../constants.js';
+import { Namespaces, NodeFilter, NodeType } from '../constants.js';
 import {
   append,
   getChildElementCount,
@@ -15,15 +15,26 @@ import {
   replaceChildren,
   walkDescendantElements,
 } from '../mixins.js';
+import { kParserAndSerializer } from '../symbols.js';
 import { TreeWalker, type TreeWalkerFilter } from '../tree-walker.js';
 import { CDATASection } from './cdata-section.js';
 import { Comment } from './comment.js';
 import { DocumentFragment } from './document-fragment.js';
 import { DocumentType } from './document-type.js';
 import { Element } from './element.js';
+import { createHtmlElement } from './html-elements.js';
 import { Node } from './node.js';
 import { ProcessingInstruction } from './processing-instruction.js';
 import { Text } from './text.js';
+
+type ParserAndSerializer = {
+  createNew(doc: Document): ParserAndSerializer;
+  parseFragmentInto: (target: Element | DocumentFragment, html: string, context?: Element) => void;
+  /** Serialize the children (inner markup) of a node. */
+  serializeChildren: (element: Element) => string;
+  /** Serialize a node and its descendants (outer markup). */
+  serializeNode: (node: Node) => string;
+};
 
 export class Document extends Node {
   readonly nodeType = NodeType.DOCUMENT_NODE;
@@ -125,7 +136,7 @@ export class Document extends Node {
   /* ---------- factories ---------- */
   createElement(localName: string): Element {
     const el = this._isHTMLDocument
-      ? new Element(localName.toLowerCase(), Namespaces.HTML, null)
+      ? createHtmlElement(localName.toLowerCase(), Namespaces.HTML, null)
       : new Element(localName, null, null);
     el.ownerDocument = this;
     return el;
@@ -139,7 +150,7 @@ export class Document extends Node {
       prefix = qualifiedName.slice(0, colon);
       localName = qualifiedName.slice(colon + 1);
     }
-    const el = new Element(localName, namespace || null, prefix);
+    const el = createHtmlElement(localName, namespace || null, prefix);
     el.ownerDocument = this;
     return el;
   }
@@ -199,11 +210,7 @@ export class Document extends Node {
     return attr;
   }
 
-  createTreeWalker(
-    root: Node,
-    whatToShow: number = NodeFilterShow.SHOW_ALL,
-    filter: TreeWalkerFilter = null,
-  ): TreeWalker {
+  createTreeWalker(root: Node, whatToShow: number = NodeFilter.SHOW_ALL, filter: TreeWalkerFilter = null): TreeWalker {
     return new TreeWalker(root, whatToShow, filter);
   }
 
@@ -286,8 +293,11 @@ export class Document extends Node {
     clone.URL = this.URL;
     clone._mode = this._mode;
     this._cloneChildrenInto(clone, deep);
+    clone[kParserAndSerializer] = this[kParserAndSerializer].createNew(clone);
     return clone;
   }
+
+  [kParserAndSerializer]!: ParserAndSerializer;
 }
 
 function setOwnerDeep(node: Node, doc: Document): void {
