@@ -50,7 +50,6 @@ export class Document extends Node {
     super();
     this.contentType = contentType;
     this._isHTMLDocument = contentType === 'text/html';
-    this.ownerDocument = this;
   }
 
   get nodeName(): string {

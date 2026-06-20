@@ -1,5 +1,6 @@
 import { DOMSelector } from '@asamuzakjp/dom-selector';
 
+import { NodeType } from './constants.js';
 import { Element } from './nodes/element.js';
 import { Node } from './nodes/node.js';
 
@@ -13,25 +14,19 @@ import { Node } from './nodes/node.js';
  * strict-equals a real document, which keeps the embedded nwsapi fast path
  * (`#canUseNwsapi`) disabled and routes all queries through Finder.
  */
-class SvgElement {}
-class ElementInternalsStub {}
 
-const SENTINEL_DOCUMENT = { nodeType: 9, contentType: 'text/html', compatMode: 'CSS1Compat' };
+const SENTINEL_DOCUMENT = { nodeType: NodeType.DOCUMENT_NODE, contentType: 'text/html', compatMode: 'CSS1Compat' };
 
 function buildWindow() {
   return {
     Node,
     Element,
     HTMLElement: Element,
-    SVGElement: SvgElement,
-    ElementInternals: ElementInternalsStub,
+    SVGElement: class {},
+    ElementInternals: class {},
     DOMException,
     TypeError,
-    document: SENTINEL_DOCUMENT,
-    getComputedStyle: () => ({ getPropertyValue: () => '' }),
-    customElements: { get: () => undefined },
     addEventListener: () => {},
-    removeEventListener: () => {},
   };
 }
 
@@ -55,12 +50,5 @@ export function querySelectorOne(selector: string, node: Node) {
 }
 
 export function querySelectorMany(selector: string, node: Node) {
-  return (
-    getEngine()
-      .querySelectorAll(selector, node as any)
-      // Need to sort the results ourselves due to https://github.com/asamuzaK/domSelector/issues/266
-      .sort((a, b) =>
-        a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
-      ) as unknown[] as Element[]
-  );
+  return getEngine().querySelectorAll(selector, node as any) as unknown[] as Element[];
 }
